@@ -1,7 +1,28 @@
-from datetime import datetime 
+from datetime import datetime, timezone 
+import sqlite3
 from flask import Flask, jsonify, request
+from pathlib import Path
 
 app = Flask(__name__, static_folder="../Dashboard", static_url_path="")
+
+DB_PATH = Path("weather.db")
+
+def get_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_database():
+    with get_connection() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS readings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                temperature_f REAL NOT NULL,
+                humidity REAL NOT NULL,
+                pressure_hpa REAL NOT NULL
+            )
+        """)
 
 @app.get("/")
 def index():
@@ -23,11 +44,16 @@ def add_reading():
     except ValueError:
         return jsonify({"error": "Temperature, humidity, and pressure must be numbers"}), 400
 
-    timestamp = datetime.now().isoformat(timespec="seconds")
+    timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    print(f"Received reading at {timestamp}: {temperature_f}°F, {humidity}%, {pressure_hpa} hPa")
+    with get_connection() as conn:
+        conn.execute("""
+            INSERT INTO readings (timestamp, temperature_f, humidity, pressure_hpa)
+            VALUES (?, ?, ?, ?)
+        """, (timestamp, temperature_f, humidity, pressure_hpa))
 
     return jsonify({"status": "ok"}), 201
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    init_database()
+    app.run(host="0.0.0.0", port=5000, debug=True)
