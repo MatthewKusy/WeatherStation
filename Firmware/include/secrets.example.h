@@ -2,4 +2,4 @@
 
 #define WIFI_SSID "YourSSID"
 #define WIFI_PASSWORD "YourPassword"
-#define SERVER_URL "http://yourserver:5000"
+#define SERVER_URL "http://yourserver:5000/api/readings"
