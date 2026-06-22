@@ -35,7 +35,7 @@ def generate_pressure(timestamp):
 
     weather_pattern = math.sin(day_number * math.pi / 5)
 
-    base_pressure = 29.92
+    base_pressure = 1013
     swing = 0.18
     noise = random.uniform(-0.03, 0.03)
 
